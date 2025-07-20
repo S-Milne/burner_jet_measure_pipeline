@@ -1,0 +1,7 @@
+{
+  "dependencies": [
+    "opencv"
+  ],
+  "version": "1.0.0",
+  "name": "burner-jet-measure"
+}

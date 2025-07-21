@@ -73,7 +73,7 @@ int main() {
 
     auto capture = cv::VideoCapture();
 
-    capture.open(0);
+    capture.open(R"(C:\Users\stewart\Downloads\2025-07-21 12-00-06.mkv)", cv::CAP_FFMPEG);
 
     if (!capture.isOpened()) {
         std::cout << "Failed to open video" << "\n";

@@ -5,7 +5,11 @@ set(CMAKE_CXX_STANDARD 23)
 if (WIN32)
     set(VCPKG_HOST_TRIPLET x64-mingw-static)
     set(VCPKG_TARGET_TRIPLET x64-mingw-static)
+else ()
+    set(VCPKG_HOST_TRIPLET arm64-linux)
+    set(VCPKG_TARGET_TRIPLET arm64-linux)
 endif ()
+
 
 
 

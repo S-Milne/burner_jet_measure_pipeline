@@ -3,8 +3,8 @@
 #include <vector>
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
-#include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/videoio.hpp>
 
 auto image_loop(const std::shared_ptr<cv::Mat>& image) {
     auto grayscale_image = cv::Mat();
@@ -69,32 +69,37 @@ auto image_loop(const std::shared_ptr<cv::Mat>& image) {
 
 
 int main() {
-    //const auto image = cv::imread(R"(C:\Users\stewart\Downloads\250630115015707.jpg)");
 
     auto capture = cv::VideoCapture();
+    auto sink = cv::VideoWriter();
 
-    capture.open(R"(C:\Users\stewart\Downloads\2025-07-21 12-00-06.mkv)", cv::CAP_FFMPEG);
+    const auto fourcc = cv::VideoWriter::fourcc('M','P','4','V');
+
+    sink.open("out.mp4", fourcc, 30.0, cv::Size(800, 600));
+    capture.open(R"(C:\Stewart\jet3.mp4)", cv::CAP_ANY);
 
     if (!capture.isOpened()) {
         std::cout << "Failed to open video" << "\n";
         return 1;
     }
 
-    auto frame = std::make_shared<cv::Mat>();
-
-    while (true) {
+    const auto frame = std::make_shared<cv::Mat>();
+    auto frame_count = 0;
+    while (frame_count < 10000) {
         capture.read(*frame);
         if (frame->empty()) {
             std::cout << "Failed to get frame" << "\n";
             break;
         }
         image_loop(frame);
-        cv::imshow("image", *frame);
-        if (cv::waitKey(5) >= 0) {
-            break;
-        }
+        sink.write(*frame);
+        std::cout << std::format("Frame: {}", frame_count) << "\n";
+        frame_count++;
     }
 
+
+    sink.release();
+    capture.release();
 
     return 0;
 }

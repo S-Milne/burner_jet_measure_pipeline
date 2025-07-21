@@ -1,9 +1,9 @@
 #include <iostream>
 #include <format>
+#include <memory>
 #include <vector>
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
 #include <opencv2/videoio.hpp>
 
 auto image_loop(const std::shared_ptr<cv::Mat>& image) {
@@ -27,14 +27,19 @@ auto image_loop(const std::shared_ptr<cv::Mat>& image) {
         40, 50,
         10, 3000);
 
-    cv::HoughCircles(
-        blur,
-        inner_circle,
-        cv::HoughModes::HOUGH_GRADIENT,
-        1,
-        blur.rows / 16,
-        40, 50,
-        10, outer_circle[0][2] * 0.8);
+    if (!outer_circle.empty()) {
+        cv::HoughCircles(
+            blur,
+            inner_circle,
+            cv::HoughModes::HOUGH_GRADIENT,
+            1,
+            blur.rows / 16,
+            40, 50,
+            10, outer_circle[0][2] * 0.8);
+    } else {
+        std::cout << "Failed to find outer circle" << "\n";
+    }
+
 
     const auto blue = cv::Scalar(255, 0, 0, 255);
     const auto black = cv::Scalar(0, 0, 0, 255);
@@ -49,8 +54,7 @@ auto image_loop(const std::shared_ptr<cv::Mat>& image) {
 
         cv::circle(*image, center, radius, blue, 2, cv::LINE_AA);
         auto text = std::format("Center: {} {} | Radius: {}", circle[0], circle[1], circle[2]);
-        cv::putText(*image, text, cv::Point(30, 30), cv::FONT_HERSHEY_PLAIN, 3, black, CPU_SSE4_1, cv::LINE_AA);
-        std::cout << text << "\n";
+        cv::putText(*image, text, cv::Point(30, 60), cv::FONT_HERSHEY_PLAIN, 3, blue, 1, cv::LINE_AA);
     }
 
     for (auto circle : inner_circle) {
@@ -62,21 +66,34 @@ auto image_loop(const std::shared_ptr<cv::Mat>& image) {
 
         cv::circle(*image, center, radius, red, 2, cv::LINE_AA);
         auto text = std::format("Center: {} {} | Radius: {}", circle[0], circle[1], circle[2]);
-        cv::putText(*image, text, cv::Point(30, 90), cv::FONT_HERSHEY_PLAIN, 3, black, CPU_SSE4_1, cv::LINE_AA);
-        std::cout << text << "\n";
+        cv::putText(*image, text, cv::Point(30, 200), cv::FONT_HERSHEY_PLAIN, 3, red, 1, cv::LINE_AA);
     }
 }
 
 
-int main() {
+int main(const int argc, char** argv) {
+
+    if (argc < 3) {
+        std::cout << "Please pass in input and output paths" << "\n";
+    }
+
+    const auto input = argv[1];
+    const auto output = argv[2];
+
+    std::cout << "Input: " << input << "\n";
+    std::cout << "Output: " << output << "\n";
+
 
     auto capture = cv::VideoCapture();
     auto sink = cv::VideoWriter();
 
-    const auto fourcc = cv::VideoWriter::fourcc('M','P','4','V');
+    const auto fourcc = cv::VideoWriter::fourcc('M', 'P', '4', 'V');
 
-    sink.open("out.mp4", fourcc, 30.0, cv::Size(800, 600));
-    capture.open(R"(C:\Stewart\jet3.mp4)", cv::CAP_ANY);
+
+    capture.open(input);
+    sink.open(output, fourcc, 30.0,
+              cv::Size(capture.get(cv::CAP_PROP_FRAME_WIDTH), capture.get(cv::CAP_PROP_FRAME_HEIGHT)));
+
 
     if (!capture.isOpened()) {
         std::cout << "Failed to open video" << "\n";
@@ -85,21 +102,23 @@ int main() {
 
     const auto frame = std::make_shared<cv::Mat>();
     auto frame_count = 0;
-    while (frame_count < 10000) {
-        capture.read(*frame);
+    while (capture.read(*frame)) {
         if (frame->empty()) {
             std::cout << "Failed to get frame" << "\n";
             break;
         }
         image_loop(frame);
         sink.write(*frame);
-        std::cout << std::format("Frame: {}", frame_count) << "\n";
+
         frame_count++;
     }
 
+    std::cout << std::format("Frames written: {}", frame_count) << "\n";
 
     sink.release();
     capture.release();
+
+    std::cout << "Done." << "\n";
 
     return 0;
 }

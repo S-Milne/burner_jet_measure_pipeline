@@ -2,6 +2,9 @@
   "name": "burner-jet-measure",
   "version": "1.0.0",
   "dependencies": [
-    "opencv"
+    {
+      "name": "opencv",
+      "features": ["ffmpeg", "dshow", "freetype"]
+    }
   ]
 }

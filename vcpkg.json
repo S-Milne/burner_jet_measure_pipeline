@@ -4,7 +4,7 @@
   "dependencies": [
     {
       "name": "opencv",
-      "features": ["ffmpeg", "dshow", "freetype"]
+      "features": ["ffmpeg", "dshow", "freetype", "gstreamer"]
     }
   ]
 }
